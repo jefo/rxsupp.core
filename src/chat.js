@@ -37,24 +37,25 @@ export class User {
 }
 
 export const Actions = {
-    addMessage: (message) => ({ type: MESSAGE_ADD, payload: message, meta: { event: MESSAGE_ADD } }),
-    connectWithUser: (id) => ({ type: CONNECT_WITH_USER, payload: id }),
-    addUser: (user) => {
-        return { type: USER_ADD, payload: new User(user) }
-    },
-    updateUser: (user) => ({ payload: user, type: USER_UPDATE, meta: { event: USER_UPDATE } }),
-    signIn: (socketId, login) => ({ type: USER_SIGN_IN, payload: { socketId, login }, meta: { event: USER_UPDATE } }),
+    addMessage: (message) => ({ type: MESSAGE_ADD, payload: message }),
+    addUser: (user) => ({ type: USER_ADD, payload: new User(user) }),
+    updateUser: (user) => ({ payload: user, type: USER_UPDATE }),
+    signIn: (socketId, login) => ({ type: USER_SIGN_IN, payload: { socketId, login } }),
     signUp: (login) => ({ type: USER_SIGN_UP, payload: { login } }),
     init: (socketId, users, messages) => {
-        let user = new User({ socketId });
-        return { type: CHAT_READY, payload: { user, users, messages }, meta: { event: CHAT_READY } };
+        return { type: CHAT_INIT, payload: { socketId, users, messages } };
     }
 };
 
-export const createChat = (dispatch, room) => {
-    let actions = bindActionCreators(Actions, dispatch);
-    return Object.assign({}, actions, {
-        selectAll: createSelector(
+/**
+ * Create redux service with selectors and actions
+ * @param {*} store 
+ */
+export const createChat = (store) => {
+    let actions = bindActionCreators(Actions, store.dispatch);
+    const createStateSelector = (...args) => () => createSelector(...args)(store.getState());
+    let selectors = {
+        selectAll: createStateSelector(
             state => state.users,
             state => state.messages,
             (users, messages) => {
@@ -64,17 +65,20 @@ export const createChat = (dispatch, room) => {
                 };
             }
         ),
-        userSelector: socketId => createSelector(
+        userSelector: socketId => createStateSelector(
             state => state.users,
             (users) => users.find(user => user.get('socketId') === socketId)
         )
-    });
+    };
+    return Object.assign({}, actions, selectors);
 };
 
 const messagesInitialState = OrderedMap();
 
 export const messagesReducer = (state = messagesInitialState, { type, payload }) => {
     switch (type) {
+        case CHAT_INIT:
+            return state.merge(fromJS(payload.messages));
         case MESSAGE_ADD:
         case MESSAGE_SEND:
             return state.set(payload.timestamp, payload);
@@ -87,6 +91,8 @@ const usersInitialState = OrderedMap();
 
 export const usersReducer = (state = usersInitialState, { type, payload }) => {
     switch (type) {
+        case CHAT_INIT:
+            return state.merge(fromJS(payload.users));
         case USER_SIGN_IN:
             return state
                 .set(payload.login, fromJS(payload))
@@ -107,17 +113,11 @@ export const usersReducer = (state = usersInitialState, { type, payload }) => {
     }
 }
 
-const connection = (state = OrderedMap(), { type, payload }) => {
-    switch (type) {
-        case CHAT_READY:
-            return state.set('socketId', payload.socketId)
-        default:
-            return state;
-    }
-}
-
-export default combineReducers({
+/**
+ * Create chat reducer
+ * @param {Object} reducers Additional reducers
+ */
+export default (reducers) => combineReducers(Object.assign({}, {
     users: usersReducer,
-    messages: messagesReducer,
-    connection
-});
+    messages: messagesReducer
+}, reducers));
