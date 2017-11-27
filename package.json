@@ -1,0 +1,26 @@
+{
+  "name": "rxsupp.core",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/jefo/rxsupp.core.git",
+  "author": "jefo <johnyjefo@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "neutrino start --use neutrino-preset-node",
+    "build": "neutrino build --use neutrino-preset-node",
+    "test": "neutrino test --use neutrino-preset-node neutrino-preset-mocha"
+  },
+  "devDependencies": {
+    "neutrino": "^7.3.2",
+    "neutrino-preset-mocha": "^7.3.2",
+    "neutrino-preset-node": "^7.3.2",
+    "redux-logger-server": "^1.0.0"
+  },
+  "dependencies": {
+    "redux": "^3.7.2",
+    "redux-cli-logger": "^2.0.0",
+    "redux-dynamic-middlewares": "^0.2.1",
+    "redux-logger": "^3.0.6",
+    "reselect": "^3.0.1"
+  }
+}
