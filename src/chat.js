@@ -2,6 +2,9 @@ import { OrderedMap, fromJS } from 'immutable';
 import { combineReducers, bindActionCreators } from 'redux';
 import { createSelector } from 'reselect';
 
+import Message from './Message';
+import User from './User';
+
 export const CHAT_UPDATE = 'CHAT_UPDATE';
 export const CHAT_READY = 'CHAT_READY';
 export const CHAT_INIT = 'CHAT_INIT';
@@ -18,27 +21,9 @@ export const CONNECT_WITH_USER = 'CONNECT_WITH_USER';
 export const OPERATOR_CONNECTED = 'OPERATOR_CONNECTED';
 export const REQUEST_MASSAGES_HISTORY = 'REQUEST_MASSAGES_HISTORY';
 
-export class Message {
-    constructor(text) {
-        this.timestamp = new Date().getTime();
-        this.userId = null;
-        this.text = text;
-    }
-}
-
-export class User {
-    constructor(attrs) {
-        this.login = attrs.login ? attrs.login : attrs.socketId;
-        this.socketId = attrs.socketId;
-        this.isLoggedIn = this.login !== attrs.socketId;
-        this.status = 'online';
-        this.roomId = attrs.roomId
-    }
-}
-
 export const Actions = {
     addMessage: (message) => ({ type: MESSAGE_ADD, payload: message }),
-    addUser: (user) => ({ type: USER_ADD, payload: new User(user) }),
+    addUser: (user) => ({ type: USER_ADD, payload: user }),
     updateUser: (user) => ({ payload: user, type: USER_UPDATE }),
     signIn: (socketId, login) => ({ type: USER_SIGN_IN, payload: { socketId, login } }),
     signUp: (login) => ({ type: USER_SIGN_UP, payload: { login } }),
@@ -55,7 +40,7 @@ export const createChat = (store) => {
     let actions = bindActionCreators(Actions, store.dispatch);
     const createStateSelector = (...args) => () => createSelector(...args)(store.getState());
     let selectors = {
-        selectAll: createStateSelector(
+        getState: createStateSelector(
             state => state.users,
             state => state.messages,
             (users, messages) => {
@@ -102,19 +87,14 @@ export const usersReducer = (state = usersInitialState, { type, payload }) => {
             return state.set(addKey, OrderedMap(payload));
         case USER_UPDATE:
             let key = payload.login ? payload.login : payload.socketId;
-            return state.update(key, user => {
-                if (!user.merge) {
-                    user = fromJS(user)
-                }
-                return user.merge(fromJS(payload))
-            });
+            return state.update(key, user => user.merge(fromJS(payload)));
         default:
             return state;
     }
 }
 
 /**
- * Create chat reducer
+ * Create chat reducer with users and messages
  * @param {Object} reducers Additional reducers
  */
 export default (reducers) => combineReducers(Object.assign({}, {
