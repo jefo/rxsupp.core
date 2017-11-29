@@ -1,7 +1,7 @@
 export default class Message {
-    constructor(text) {
+    constructor(attrs) {
         this.timestamp = new Date().getTime();
-        this.userId = null;
-        this.text = text;
+        this.userId = attrs.userId;
+        this.text = attrs.text;
     }
 }

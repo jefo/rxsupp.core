@@ -1,4 +1,4 @@
-import { OrderedMap, fromJS } from 'immutable';
+import { Map, OrderedMap, fromJS } from 'immutable';
 import { combineReducers, bindActionCreators } from 'redux';
 import { createSelector } from 'reselect';
 
@@ -27,8 +27,8 @@ export const Actions = {
     updateUser: (user) => ({ payload: user, type: USER_UPDATE }),
     signIn: (socketId, login) => ({ type: USER_SIGN_IN, payload: { socketId, login } }),
     signUp: (login) => ({ type: USER_SIGN_UP, payload: { login } }),
-    init: (socketId, users, messages) => {
-        return { type: CHAT_INIT, payload: { socketId, users, messages } };
+    init: (payload) => {
+        return { type: CHAT_INIT, payload };
     }
 };
 
@@ -45,7 +45,7 @@ export const createChat = (store) => {
             state => state.messages,
             (users, messages) => {
                 return {
-                    users: users.filter(user => user.get('status') !== 'offline').toJS(),
+                    users: users.filter(user => user.get('status') !== 'disconnect').toJS(),
                     messages: messages.toJS()
                 };
             }
@@ -66,7 +66,7 @@ export const messagesReducer = (state = messagesInitialState, { type, payload })
             return state.merge(fromJS(payload.messages));
         case MESSAGE_ADD:
         case MESSAGE_SEND:
-            return state.set(payload.timestamp, payload);
+            return state.set(payload.timestamp, Map(payload));
         default:
             return state;
     }
@@ -79,15 +79,11 @@ export const usersReducer = (state = usersInitialState, { type, payload }) => {
         case CHAT_INIT:
             return state.merge(fromJS(payload.users));
         case USER_SIGN_IN:
-            return state
-                .set(payload.login, fromJS(payload))
-                .remove(payload.socketId);
+            return state.set(payload.id, fromJS(payload))
         case USER_ADD:
-            let addKey = payload.login ? payload.login : payload.socketId;
-            return state.set(addKey, OrderedMap(payload));
+            return state.set(payload.id, Map(payload));
         case USER_UPDATE:
-            let key = payload.login ? payload.login : payload.socketId;
-            return state.update(key, user => user.merge(fromJS(payload)));
+            return state.update(payload.id, user => user.merge(fromJS(payload)));
         default:
             return state;
     }
