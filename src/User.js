@@ -6,5 +6,6 @@ export default class User {
         this.isLoggedIn = this.login !== attrs.socketId;
         this.status = 'online';
         this.room = attrs.room;
+        this.color = attrs.color;
     }
 }
