@@ -16,6 +16,7 @@ export const USER_SIGN_UP = 'USER_SIGN_UP';
 export const USER_SIGN_IN = 'USER_SIGN_IN';
 export const SET_USER_OFFLINE = 'SET_USER_OFFLINE';
 export const MESSAGE_ADD = 'MESSAGE_ADD';
+export const MESSAGES_ADD = 'MESSAGES_ADD';
 export const MESSAGE_SEND = 'MESSAGE_SEND';
 export const CONNECT_WITH_USER = 'CONNECT_WITH_USER';
 export const OPERATOR_CONNECTED = 'OPERATOR_CONNECTED';
@@ -24,6 +25,7 @@ export const REQUEST_MASSAGES_HISTORY = 'REQUEST_MASSAGES_HISTORY';
 export const Actions = {
     addMessage: (message) => ({ type: MESSAGE_ADD, payload: message }),
     addUser: (user) => ({ type: USER_ADD, payload: user }),
+    addMessages: (messages) => ({ type: MESSAGES_ADD, messages }),
     updateUser: (user) => ({ payload: user, type: USER_UPDATE }),
     signIn: (socketId, login) => ({ type: USER_SIGN_IN, payload: { socketId, login } }),
     signUp: (login) => ({ type: USER_SIGN_UP, payload: { login } }),
@@ -64,6 +66,8 @@ export const messagesReducer = (state = messagesInitialState, { type, payload })
     switch (type) {
         case CHAT_INIT:
             return state.merge(fromJS(payload.messages));
+        case MESSAGES_ADD:
+            return state.merge(fromJS(payload));
         case MESSAGE_ADD:
         case MESSAGE_SEND:
             return state.set(payload.timestamp, Map(payload));
